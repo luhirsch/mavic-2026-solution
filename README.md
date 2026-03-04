@@ -1,4 +1,4 @@
-# Team UoE Solution: 5th Multi-modal Aerial View Imagery Challenge: Classification (MAVIC-C)
+# Team UoE Solution: 5th Multi-modal Aerial View Imagery Challenge - Classification (MAVIC-C)
 
 ### 4th Place Overall | 1st Place for OOD Detection (Best AUROC & TNR@TPR95)
 
