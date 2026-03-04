@@ -18,10 +18,12 @@ This completely avoids the overconfidence flaws of standard softmax probabilitie
 
 ## Installation
 
-DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). DINOv3 requires a recent PyTorch version, this projects uses PyTorch 2.6.
-`peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA finetuning of the DINOv3 backbone.
+DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
+`peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
-Requirements can be installed with `pip`
+
+
+Requirements can be installed with `pip`:
 
 ```pip install -r requirements.txt```
 
