@@ -14,6 +14,17 @@ A core component of the architecture is the decoupling of the image classificati
 A standard Multilayer Perceptron (MLP) handless class classifiation,while OOD confidence scores are computed independently using the minimum Mahalanobis distance to class centroids in feature space.
 This completely avoids the overconfidence flaws of standard softmax probabilities.
 
+----
+
+## Installation
+
+DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). DINOv3 requires a recent PyTorch version, this projects uses PyTorch 2.6.
+`peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA finetuning of the DINOv3 backbone.
+
+Requirements can be installed with `pip`
+
+```pip install -r requirements.txt```
+
 
 ----
 
@@ -21,9 +32,4 @@ This completely avoids the overconfidence flaws of standard softmax probabilitie
 
 TODO
 
---
-
-## Installation
-
-TODO
 
