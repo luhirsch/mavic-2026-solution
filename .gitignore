@@ -1,2 +1,10 @@
+# Ignore things created by my IDE
 /.idea
-/data/train
+
+# Ignore downloaded dataset files but keep the directory structure
+data/*
+!data/.gitkeep
+
+# Ignore generated checkpoints/results but keep the directory structure
+output/*
+!output/.gitkeep

@@ -19,37 +19,32 @@ from peft import LoraConfig, get_peft_model
 from sklearn.metrics import f1_score
 import numpy as np
 
-# Choose path based on system
-windowsPath = r"M:\projects"
-linuxPath = "/home/s2807393/RDS/projects"
-PROJECT_FOLDER = windowsPath if platform.system() == "Windows" else linuxPath
-sys.path.append(PROJECT_FOLDER)
-
-# Custom utility functions
-import myutils
-import dino_utils
-import unicornv2_utils
-
+# %%
 # ==========================================
 # 1. SETTINGS & CONFIGURATION
 # ==========================================
 MODEL_TYPE = "vits_plus"
 IMAGE_SIZE = 128
 CONFIG = {
+    # Training Configuration
     "BATCH_SIZE": 256,
     "EPOCHS": 10,
     "LR": 0.8e-5,
-    "CHECKPOINT_NAME": f"dinov3_{MODEL_TYPE}_lora_finetune_CELoss_EOAlign_{IMAGE_SIZE}_v13.pth",
+    "CHECKPOINT_NAME": f"dinov3_{MODEL_TYPE}_lora_finetune_{IMAGE_SIZE}.pth",
+
+    # LoRA Configuration
     "LORA_R": 20,
     "LORA_ALPHA": 40,
     "LORA_TARGET_MODULES": ["qkv"],
     "LORA_DROPOUT": 0.05,
+
+    # Loss configuration
     "LAMBDA_ALIGN": 0.45,
 }
 
-BASE_DIR = os.path.join(PROJECT_FOLDER, "dino_tests")
-DATA_DIR = os.path.join(PROJECT_FOLDER, "data")
-TRAIN_DIR = os.path.join(DATA_DIR, "MAVIC_C_2025", "train", "SAR_Train")
+# Set up directories
+DATA_DIR = "./data/MAVIC_C_2025"
+TRAIN_DIR_SAR =
 TRAIN_DIR_EO = os.path.join(DATA_DIR, "MAVIC_C_2025", "train", "EO_Train")
 VAL_DIR = os.path.join(DATA_DIR, "MAVIC_C_2025", "val_organized", "IID")
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs", "unicornv2_classification", "lora_checkpoints")

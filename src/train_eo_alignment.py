@@ -1,7 +1,7 @@
 
 """
 Script: train_eo_alignment.py
-Purpose: Fine-tunes a SAR DINOv3 (ViT-S+) backbone using LoRA adapters.
+Purpose: Fine tunes a SAR DINOv3 (ViT-S+) backbone using LoRA adapters.
          Applies Maximum Mean Discrepancy (MMD) to align the trainable SAR
          features with a frozen EO reference model. Handles severe class
          imbalance using a dynamically oversampled WeightedRandomSampler.
@@ -18,25 +18,9 @@ from torchvision.datasets.folder import default_loader
 from peft import LoraConfig, get_peft_model
 from sklearn.metrics import f1_score
 import numpy as np
-
 import os, sys, platform
 
-# Setting path based on current platform, so I can import my libraries
-windowsPath = r"M:\projects"
-linuxPath = "/home/s2807393/RDS/projects"
 
-# Choose path based on system
-if platform.system() == "Windows":
-    sys.path.append(windowsPath)
-    PROJECT_FOLDER = windowsPath
-else:  # Linux
-    sys.path.append(linuxPath)
-    PROJECT_FOLDER = linuxPath
-
-# My utility functions
-import myutils
-import dino_utils
-import unicornv2_utils
 
 # %%
 MODEL_TYPE = "vits_plus"  # ViT-Small
