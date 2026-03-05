@@ -4,6 +4,10 @@
 
 *View the official [CodaBench Results Leaderboard](https://www.codabench.org/competitions/12529/#/results-tab)*
 
+**Authors**: Lucas Hirsch, Mike Davies
+
+**Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
+
 ## Solution Overview
 This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PVBS workshop.
 
@@ -14,10 +18,7 @@ A core component of the architecture is the decoupling of the image classificati
 A simple linear classifier handles classifiation, while OOD confidence scores are computed independently as the minimum Mahalanobis distance to class centroids in feature space.
 This completely avoids the overconfidence flaws of standard logits or softmax probabilities.
 
-**Authors**: Lucas Hirsch, Mike Davies
 
-
-**Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
 
 ## Results
 Team IDCOM achieved 4th place overall with a total score of 0.38.
