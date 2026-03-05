@@ -15,6 +15,8 @@ A simple linear classifier handles classifiation, while OOD confidence scores ar
 This completely avoids the overconfidence flaws of standard logits or softmax probabilities.
 
 **Authors**: Lucas Hirsch, Mike Davies
+
+
 **Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
 
 ## Results
