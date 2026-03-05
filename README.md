@@ -4,7 +4,7 @@
 
 *View the official [CodaBench Results Leaderboard](https://www.codabench.org/competitions/12529/#/results-tab)*
 
-**Authors**: Lucas Hirsch, Mike Davies
+**Authors**: [Lucas Hirsch](https://luhirsch.github.io/), [Mike Davies](https://eng.ed.ac.uk/about/people/professor-michael-e-davies)
 
 **Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
 
