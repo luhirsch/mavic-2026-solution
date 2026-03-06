@@ -18,6 +18,8 @@ A core component of the architecture is the decoupling of the image classificati
 A simple linear classifier handles classifiation, while OOD confidence scores are computed independently as the minimum Mahalanobis distance to class centroids in feature space.
 This completely avoids the overconfidence flaws of standard logits or softmax probabilities.
 
+![plot](./IDCOM_Architecture.png)
+
 
 
 ## Results
@@ -42,9 +44,13 @@ Requirements can be installed with `pip`:
 ```pip install -r requirements.txt```
 
 
+For a quick rundown of how to use the DINOv3 model, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb).
+
 ----
 
 ## Usage
+
+0. For help using DINOv3, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb) or refer to the [official repo](https://github.com/facebookresearch/dinov3)
 
 1. Training the Model
 To train the SAR backbone with LoRA and MMD alignment using the EO reference data, run:
