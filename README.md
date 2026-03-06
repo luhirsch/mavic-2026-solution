@@ -34,9 +34,10 @@ Team IDCOM achieved 4th place overall with a total score of 0.38.
 
 ## Installation
 
-DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
-`peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
-
+Major requirements:
+ - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
+ - DINOv3 weights: DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). 
+ - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
 
 Requirements can be installed with `pip`:
