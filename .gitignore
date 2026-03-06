@@ -4,6 +4,8 @@
 # Ignore downloaded dataset files but keep the directory structure
 data/*
 !data/.gitkeep
+!data/organize_mavic_val_data_into_folders.py
+!data/validation_reference.csv
 
 # Ignore generated checkpoints/results but keep the directory structure
 output/*
