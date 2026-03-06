@@ -47,6 +47,7 @@ DATA_DIR = "./data/MAVIC_C_2025"
 TRAIN_DIR_SAR = "./data/MAVIC_C_2025/train/SAR_Train"
 TRAIN_DIR_EO = "./data/MAVIC_C_2025/train/EO_Train"
 OUTPUT_DIR = "./output"
+SAVE_PATH = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -113,6 +114,11 @@ class CrossModalDINOv3Classifier(nn.Module):
 #             DATASET WRAPPER
 # ==========================================
 class PairedSAREODataset(Dataset):
+    """
+    Wraps two ImageFolder datasets (SAR and EO) and yields them together.
+    Assumes strictly identical file structures and alphabetical file naming
+    between the two directories so that indices perfectly align.
+    """
     def __init__(self, sar_dataset, eo_dataset):
         assert len(sar_dataset) == len(eo_dataset), "SAR and EO datasets must match in length!"
         self.sar_dataset = sar_dataset
@@ -137,7 +143,7 @@ class PairedSAREODataset(Dataset):
 #            TRAINING LOGIC
 # ==========================================
 def run_training():
-    print("--- 1. Loading Backbones ---")
+    print("--- Loading Backbones ---")
     sar_backbone, _ = dino_utils.load_dino_model(MODEL_TYPE)
     eo_backbone, _ = dino_utils.load_dino_model(MODEL_TYPE)
 
@@ -147,33 +153,37 @@ def run_training():
     for param in sar_backbone.parameters(): param.requires_grad = False
     for param in eo_backbone.parameters(): param.requires_grad = False
 
+    # Wrap both backbones into dual stream architecture
     model = CrossModalDINOv3Classifier(sar_backbone, eo_backbone, num_classes=len(CLASS_NAMES))
 
-    print("--- 2. Injecting LoRA ---")
+    # Apply LoRA - We use the peft library
+    print("--- Injecting LoRA ---")
     peft_config = LoraConfig(
         r=CONFIG["LORA_R"],
         lora_alpha=CONFIG["LORA_ALPHA"],
-        target_modules=CONFIG["LORA_TARGET_MODULES"],
+        target_modules=CONFIG["LORA_TARGET_MODULES"], #Inject into qkv modules of transformer blocks
         lora_dropout=CONFIG["LORA_DROPOUT"],
-        exclude_modules=["eo_backbone"],
+        exclude_modules=["eo_backbone"], # Shield the EO backbone from LoRA
         bias="none",
         modules_to_save=["head"]
     )
 
     model = get_peft_model(model, peft_config)
+
+    # Print amount of trainable parameters after LoRA injection
     trainable_params, all_param = model.get_nb_trainable_parameters()
     print(
-        f"Trainable params: {trainable_params:,d} || All params: {all_param:,d} || Trainable%: {100 * trainable_params / all_param:.4f}")
+        f"Trainable params: {trainable_params:,d} || All params (2 DINOv3 + Head): {all_param:,d} || Trainable%: {100 * trainable_params / all_param:.4f}")
     model.to(DEVICE)
 
-    print("--- 3. Preparing Data ---")
+    print("--- Preparing Data ---")
+    # Make DINOv3 transoform
     transform = dino_utils.make_dino_transform(model_type=MODEL_TYPE, resize_size=IMAGE_SIZE)
 
-    train_sar_ds = unicornv2_utils.CachedImageFolder(TRAIN_DIR, cache_name="train_mavic_cache.pt", transform=transform)
-    train_eo_ds = unicornv2_utils.CachedImageFolder(TRAIN_DIR_EO, cache_name="train_mavic_eo_cache.pt",
-                                                    transform=transform)
+    # Load SAR and EO train data
+    train_sar_ds = datasets.ImageFolder(TRAIN_DIR, transform=transform)
+    train_eo_ds = datasets.ImageFolder(TRAIN_DIR_EO, transform=transform)
     train_paired_ds = PairedSAREODataset(train_sar_ds, train_eo_ds)
-    val_ds = unicornv2_utils.CachedImageFolder(VAL_DIR, cache_name="val_id_mavic_cache.pt", transform=transform)
 
     # Export class mapping for inference script alignment
     mapping_path = os.path.join(OUTPUT_DIR, "class_to_idx.json")
@@ -181,6 +191,7 @@ def run_training():
         json.dump(train_sar_ds.class_to_idx, f)
     print(f"Saved class_to_idx mapping to {mapping_path}")
 
+    # Create Sampler and Dataloader
     print("Calculating sampler weights...")
     targets = train_sar_ds.targets
     class_counts = np.bincount(targets)
@@ -189,16 +200,16 @@ def run_training():
     sampler = WeightedRandomSampler(samples_weights, num_samples=len(samples_weights), replacement=True)
 
     train_loader = DataLoader(train_paired_ds, batch_size=CONFIG["BATCH_SIZE"], sampler=sampler, num_workers=4)
-    val_loader = DataLoader(val_ds, batch_size=CONFIG["BATCH_SIZE"], shuffle=False, num_workers=4)
 
+    # Loss functions and training setup
     criterion_classification = nn.CrossEntropyLoss().to(DEVICE)
-    criterion_alignment = MMDLoss().to(DEVICE) if CONFIG["LAMBDA_ALIGN"] > 0 else nn.Identity().to(DEVICE)
+    criterion_alignment = MMDLoss().to(DEVICE)
 
     optimizer = optim.AdamW(model.parameters(), lr=CONFIG["LR"])
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["EPOCHS"])
 
-    print("--- 4. Starting Training ---")
-    best_f1 = 0.0
+    print("--- Starting Training ---")
+    best_f1 = 0.0 # Checkpointing model based on best f1-score on validation set
 
     for epoch in range(CONFIG["EPOCHS"]):
         model.train()
@@ -208,30 +219,33 @@ def run_training():
             sar_images, eo_images, labels = sar_images.to(DEVICE), eo_images.to(DEVICE), labels.to(DEVICE)
             optimizer.zero_grad()
 
+            # Forward pass through the model
             logits, sar_feats, eo_feats = model(sar_images, eo_images)
 
+            # Compute losses
             loss_classification = criterion_classification(logits, labels)
-            loss_align = criterion_alignment(sar_feats, eo_feats) if CONFIG["LAMBDA_ALIGN"] > 0 else 0.0
-
+            loss_align = criterion_alignment(sar_feats, eo_feats)
             loss = ((1 - CONFIG["LAMBDA_ALIGN"]) * loss_classification) + (CONFIG["LAMBDA_ALIGN"] * loss_align)
 
+            # Backward pass and optimization
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
 
-            if i % 50 == 0:
+            if i % 100 == 0:
                 print(
-                    f"Epoch {epoch + 1} [Batch {i}/{len(train_loader)}]: Loss CLS: {loss_classification.item():.3f} | Loss Align: {loss_align if isinstance(loss_align, float) else loss_align.item():.3f} | Total: {loss.item():.3f}")
+                    f"Epoch {epoch + 1} [Batch {i}/{len(train_loader)}]: Loss CLS: {loss_classification.item():.3f} | Loss Align: {loss_align.item():.3f} | Total: {loss.item():.3f}")
 
         scheduler.step()
 
+        # Run model through VALIDATION set to monitor performance and save best model based on f1-score
         model.eval()
         all_preds, all_labels = [], []
 
         with torch.no_grad():
             for images, labels in val_loader:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                logits, _, _ = model(images)
+                logits, _, _ = model(images) # We ignore features during validation
                 preds = torch.argmax(logits, dim=1)
 
                 all_preds.extend(preds.cpu().numpy())
@@ -240,22 +254,13 @@ def run_training():
         val_f1 = f1_score(all_labels, all_preds, average='macro')
         val_acc = np.mean(np.array(all_preds) == np.array(all_labels))
 
-        pred_counts = np.bincount(all_preds, minlength=len(CLASS_NAMES))
-        pred_probs = pred_counts / len(all_preds)
-        entropy = -np.sum(pred_probs * np.log(pred_probs + 1e-8))
-        balance_score = entropy / np.log(len(CLASS_NAMES))
-
         print(
-            f"Epoch {epoch + 1}/{CONFIG['EPOCHS']} | Avg Loss: {total_loss / len(train_loader):.4f} | Val Acc: {val_acc:.4f} | Val Macro F1: {val_f1:.4f} | Pred Balance: {balance_score:.4f}")
-
-        dist_str = " | ".join([f"{CLASS_NAMES[i]}: {count}" for i, count in enumerate(pred_counts)])
-        print(f"   ↳ Pred Distribution -> {dist_str}")
+            f"Epoch {epoch + 1}/{CONFIG['EPOCHS']} | Avg Loss: {total_loss / len(train_loader):.4f} | Val Acc: {val_acc:.4f} | Val Macro F1: {val_f1:.4f}")
 
         if val_f1 > best_f1:
             best_f1 = val_f1
-            save_path = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
-            torch.save(model.state_dict(), save_path)
-            print(f">>> New Best Model Saved to {save_path}")
+            torch.save(model.state_dict(), SAVE_PATH)
+            print(f">>> New Best Model Saved to {SAVE_PATH}")
 
 
 if __name__ == "__main__":
