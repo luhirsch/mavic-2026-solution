@@ -2,11 +2,11 @@
 
 ### 4th Place Overall | 1st Place for OOD Detection (Best AUROC & TNR@TPR95)
 
-*View the official [CodaBench Results Leaderboard](https://www.codabench.org/competitions/12529/#/results-tab)*
-
 **Authors**: [Lucas Hirsch](https://luhirsch.github.io/), [Mike Davies](https://eng.ed.ac.uk/about/people/professor-michael-e-davies)
 
 **Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
+
+*View the official [CodaBench Results Leaderboard](https://www.codabench.org/competitions/12529/#/results-tab)*
 
 ## Solution Overview
 This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PVBS workshop.
