@@ -1,5 +1,12 @@
-# Loss function for MMD
+"""
+Calculates the Maximum Mean Discrepancy (MMD) loss between two feature distributions.
+This module is used to mathematically align the trainable SAR feature space with the
+frozen EO reference during the model's fine-tuning.
+"""
 # Obtained from https://github.com/yiftachbeer/mmd_loss_pytorch
+
+import torch
+import torch.nn as nn
 
 class RBF(nn.Module):
     def __init__(self, n_kernels=5, mul_factor=2.0, bandwidth=None):
