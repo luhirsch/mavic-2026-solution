@@ -36,7 +36,7 @@ else: # Linux
 # My utility functions
 import myutils
 import dino_utils
-import unicornv2_utils
+import submission
 
 # %%
 BASE_DIR =  os.path.join(PROJECT_FOLDER, "dino_tests")
