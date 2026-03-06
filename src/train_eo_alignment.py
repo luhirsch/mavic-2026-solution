@@ -4,52 +4,95 @@ Purpose: Fine-tunes a SAR DINOv3 (ViT-S+) backbone using LoRA adapters,
          applying Maximum Mean Discrepancy (MMD) to align trainable SAR
          features with a frozen EO reference model. Handles class imbalance
          using a dynamically oversampled WeightedRandomSampler.
+
+Things to update:
+ - DINO_WEIGHTS - Please update with your paths
+ - DINO_REPO - Please download from https://github.com/facebookresearch/dinov3 anbd update with your paths
+ - Data - Please put MAVIC-C 2025 data in the "data" folder:
+    - TRAIN_DATA_SAR: Path to the directory containing SAR training images
+    - TRAIN_DATA_EO: Path to the directory containing EO training images
+    - VAL_DATA: Path to the directory containing validation images
+ - OUTPUT_DIR: Path to the directory where model checkpoints and other outputs will be saved
+
+Settings:
+    - EPOCHS: Number of training epochs
+    - LR: Learning rate
+    - BATCH_SIZE: Batch size
+    - LORA_R: Rank (r) of the LoRA adapter
+    - LORA_ALPHA: Alpha parameter of the LoRA adapter
+    - LORA_DROPOUT: Dropout probability of the LoRA adapter
+
+Outputs:
+    - Model Checkpoint: Saves the best model based on F1-score on the validation set
+
 """
 
 import os
-import sys
-import platform
-import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.utils.data import DataLoader, WeightedRandomSampler, Dataset
+from torchvision import datasets, transforms
 from peft import LoraConfig, get_peft_model
 from sklearn.metrics import f1_score
 import numpy as np
+from mmd_loss import MMDLoss
+import model_utils
+
+# TODO: do the following
+# 5. Add script that organizes VALIDATION data
+
+# ========
+
+
+# %%
+# ==============================================
+#  DIRECTORY SETTINGS (UPDATE WITH YOUR PATHS)
+# ==============================================
+
+# DINOv3 weights - Please update with your paths
+DINO_WEIGHTS = "..\..\dino_vit_s_weights\dinov3_vits16plus_pretrain_lvd1689m-4057cbaa.pth"
+DINO_REPO = "..\..\dinov3"
+
+
+# Data - Please put MAVIC-C 2025 data in the "data" folder:
+TRAIN_DATA_SAR = "./data/MAVIC_C_2025/train/SAR_Train"
+TRAIN_DATA_EO = "./data/MAVIC_C_2025/train/EO_Train"
+VAL_DATA = "./data/MAVIC_C_2025/val"
+
+# Outputs (model checkpoint)
+# The model will be saved in the "output" folder as a .pth file
+OUTPUT_DIR = "./output"
+
 
 # %%
 # ==========================================
-# 1. SETTINGS & CONFIGURATION
+#        TRAINING SETTINGS
 # ==========================================
-MODEL_TYPE = "vits_plus"
-IMAGE_SIZE = 128
+MODEL_TYPE = "dinov3_vits16plus"
+IMAGE_SIZE = 128 # Size to which images will be resized for DINOv3 (should be a multiple of 16)
 CONFIG = {
     # Training Configuration
     "BATCH_SIZE": 256,
-    "EPOCHS": 10,
+    "EPOCHS": 25,
     "LR": 0.8e-5,
-    "CHECKPOINT_NAME": f"dinov3_{MODEL_TYPE}_lora_finetune_{IMAGE_SIZE}.pth",
+    "CHECKPOINT_NAME": f"{MODEL_TYPE}_LoRA_finetune_{IMAGE_SIZE}.pth",
 
     # LoRA Configuration
-    "LORA_R": 20,
-    "LORA_ALPHA": 40,
+    "LORA_R": 28,
+    "LORA_ALPHA": 2*28,
     "LORA_TARGET_MODULES": ["qkv"],
     "LORA_DROPOUT": 0.05,
 
     # Loss configuration
     "LAMBDA_ALIGN": 0.45,
 }
-
-# Set up directories
-DATA_DIR = "./data/MAVIC_C_2025"
-TRAIN_DIR_SAR = "./data/MAVIC_C_2025/train/SAR_Train"
-TRAIN_DIR_EO = "./data/MAVIC_C_2025/train/EO_Train"
-OUTPUT_DIR = "./output"
 SAVE_PATH = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+# %%
 
 CLASS_NAMES = [
     "SUV", "box_truck", "bus", "flatbed_truck", "motorcycle",
@@ -72,44 +115,11 @@ print(f"""
 ==========================================
 """)
 
-# %%
-# ==========================================
-#             MODEL WRAPPER
-# ==========================================
-class CrossModalDINOv3Classifier(nn.Module):
-    def __init__(self, sar_backbone, eo_backbone, num_classes):
-        super().__init__()
-        self.sar_backbone = sar_backbone
-        self.eo_backbone = eo_backbone
 
-        # Freeze the EO backbone completely
-        for param in self.eo_backbone.parameters():
-            param.requires_grad = False
 
-        feat_dim = sar_backbone.embed_dim
-        print(f"Detected Embedding Dimension: {feat_dim}")
+# %% Dataset Wrapper
+# Takes the SAR and EO datasets and pairs them together for training.
 
-        # Classification head (only for SAR features)
-        self.head = nn.Linear(feat_dim, num_classes)
-
-    def forward(self, sar_x, eo_x=None):
-        # Get SAR features
-        sar_features = self.sar_backbone(sar_x)
-        sar_features = F.normalize(sar_features, dim=1)
-
-        # Predict using SAR features
-        logits = self.head(sar_features)
-
-        # If EO data is provided (training), get EO features
-        if eo_x is not None:
-            with torch.no_grad():
-                eo_features = F.normalize(self.eo_backbone(eo_x), dim=1)
-            return logits, sar_features, eo_features
-
-        # If no EO data is provided (validation/testing), return None for EO
-        return logits, sar_features, None
-
-# %%
 # ==========================================
 #             DATASET WRAPPER
 # ==========================================
@@ -117,7 +127,7 @@ class PairedSAREODataset(Dataset):
     """
     Wraps two ImageFolder datasets (SAR and EO) and yields them together.
     Assumes strictly identical file structures and alphabetical file naming
-    between the two directories so that indices perfectly align.
+    between the two directories so that indices align.
     """
     def __init__(self, sar_dataset, eo_dataset):
         assert len(sar_dataset) == len(eo_dataset), "SAR and EO datasets must match in length!"
@@ -144,8 +154,8 @@ class PairedSAREODataset(Dataset):
 # ==========================================
 def run_training():
     print("--- Loading Backbones ---")
-    sar_backbone, _ = dino_utils.load_dino_model(MODEL_TYPE)
-    eo_backbone, _ = dino_utils.load_dino_model(MODEL_TYPE)
+    sar_backbone = model_utils.load_dino_model(model_type=MODEL_TYPE, weights_file=DINO_WEIGHTS, repo_dir=DINO_REPO)
+    eo_backbone = model_utils.load_dino_model(model_type=MODEL_TYPE, weights_file=DINO_WEIGHTS, repo_dir=DINO_REPO)
 
     sar_backbone.to(DEVICE)
     eo_backbone.to(DEVICE)
@@ -154,7 +164,7 @@ def run_training():
     for param in eo_backbone.parameters(): param.requires_grad = False
 
     # Wrap both backbones into dual stream architecture
-    model = CrossModalDINOv3Classifier(sar_backbone, eo_backbone, num_classes=len(CLASS_NAMES))
+    model = model_utils.CrossModalDINOv3Classifier(sar_backbone, eo_backbone, num_classes=len(CLASS_NAMES))
 
     # Apply LoRA - We use the peft library
     print("--- Injecting LoRA ---")
@@ -170,27 +180,27 @@ def run_training():
 
     model = get_peft_model(model, peft_config)
 
-    # Print amount of trainable parameters after LoRA injection
+    # Print the amount of trainable parameters after LoRA injection
     trainable_params, all_param = model.get_nb_trainable_parameters()
     print(
         f"Trainable params: {trainable_params:,d} || All params (2 DINOv3 + Head): {all_param:,d} || Trainable%: {100 * trainable_params / all_param:.4f}")
     model.to(DEVICE)
 
     print("--- Preparing Data ---")
-    # Make DINOv3 transoform
-    transform = dino_utils.make_dino_transform(model_type=MODEL_TYPE, resize_size=IMAGE_SIZE)
+    # Make DINOv3 transform
+    transform = model_utils.make_dino_transform(resize_size=IMAGE_SIZE)
 
+    # --- Set up Pytorch datasets ---
     # Load SAR and EO train data
-    train_sar_ds = datasets.ImageFolder(TRAIN_DIR, transform=transform)
-    train_eo_ds = datasets.ImageFolder(TRAIN_DIR_EO, transform=transform)
+    train_sar_ds = datasets.ImageFolder(TRAIN_DATA_SAR, transform=transform)
+    train_eo_ds = datasets.ImageFolder(TRAIN_DATA_EO, transform=transform)
     train_paired_ds = PairedSAREODataset(train_sar_ds, train_eo_ds)
 
-    # Export class mapping for inference script alignment
-    mapping_path = os.path.join(OUTPUT_DIR, "class_to_idx.json")
-    with open(mapping_path, "w") as f:
-        json.dump(train_sar_ds.class_to_idx, f)
-    print(f"Saved class_to_idx mapping to {mapping_path}")
+    # Load validation data
+    val_ds = datasets.ImageFolder(VAL_DATA, transform=transform)
 
+
+    # --- Set up PyTorch DataLoaders ---
     # Create Sampler and Dataloader
     print("Calculating sampler weights...")
     targets = train_sar_ds.targets
@@ -200,6 +210,7 @@ def run_training():
     sampler = WeightedRandomSampler(samples_weights, num_samples=len(samples_weights), replacement=True)
 
     train_loader = DataLoader(train_paired_ds, batch_size=CONFIG["BATCH_SIZE"], sampler=sampler, num_workers=4)
+    val_loader = DataLoader(val_ds, batch_size=CONFIG["BATCH_SIZE"], shuffle=False, num_workers=4)
 
     # Loss functions and training setup
     criterion_classification = nn.CrossEntropyLoss().to(DEVICE)
@@ -208,6 +219,7 @@ def run_training():
     optimizer = optim.AdamW(model.parameters(), lr=CONFIG["LR"])
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["EPOCHS"])
 
+    # --- Training Loop ---
     print("--- Starting Training ---")
     best_f1 = 0.0 # Checkpointing model based on best f1-score on validation set
 
@@ -233,12 +245,12 @@ def run_training():
             total_loss += loss.item()
 
             if i % 100 == 0:
-                print(
-                    f"Epoch {epoch + 1} [Batch {i}/{len(train_loader)}]: Loss CLS: {loss_classification.item():.3f} | Loss Align: {loss_align.item():.3f} | Total: {loss.item():.3f}")
+                print(f"Epoch {epoch + 1} [Batch {i}/{len(train_loader)}]: Loss CLS: {loss_classification.item():.3f}"
+                      f" | Loss Align: {loss_align.item():.3f} | Total: {loss.item():.3f}")
 
         scheduler.step()
 
-        # Run model through VALIDATION set to monitor performance and save best model based on f1-score
+        # Run model through VALIDATION data to monitor performance and save the BEST MODEL based on f1-score
         model.eval()
         all_preds, all_labels = [], []
 
@@ -254,8 +266,8 @@ def run_training():
         val_f1 = f1_score(all_labels, all_preds, average='macro')
         val_acc = np.mean(np.array(all_preds) == np.array(all_labels))
 
-        print(
-            f"Epoch {epoch + 1}/{CONFIG['EPOCHS']} | Avg Loss: {total_loss / len(train_loader):.4f} | Val Acc: {val_acc:.4f} | Val Macro F1: {val_f1:.4f}")
+        print(f"Epoch {epoch + 1}/{CONFIG['EPOCHS']} | Avg Loss: {total_loss / len(train_loader):.4f} |"
+              f" Val Acc: {val_acc:.4f} | Val Macro F1: {val_f1:.4f}")
 
         if val_f1 > best_f1:
             best_f1 = val_f1
