@@ -1,5 +1,5 @@
 """
-Funtions for working with the DINOv3 models
+Functions for working with the DINOv3 models
 
 load_dino_model: For loading the DINOv3 model
 make_dino_transform: For creating the DINOv3 transform
@@ -31,7 +31,7 @@ def load_dino_model(model_type, weights_file, repo_dir):
                            source='local',
                            weights=weights_file,
                            trust_repo=True)  # Local
-    print(f"{model_type} loaded succesfully")
+    print(f"{model_type} loaded successfully")
 
     return model
 

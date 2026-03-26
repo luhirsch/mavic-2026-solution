@@ -96,7 +96,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 CLASS_NAMES = [
     "SUV", "box_truck", "bus", "flatbed_truck", "motorcycle",
-    "pickup_truck", "pickup_truck_w_semi", "sedan", "semi_w_trailer", "van"
+    "pickup_truck", "pickup_truck_w_trailer", "sedan", "semi_w_trailer", "van"
 ]
 
 print(f"""
