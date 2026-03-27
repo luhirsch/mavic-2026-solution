@@ -1,5 +1,6 @@
-# Ignore things created by my IDE
+# Ignore things created by IDEs and PyTorch caches
 /.idea
+src/__pycache__
 
 # Ignore downloaded dataset files but keep the directory structure
 data/*
@@ -10,3 +11,6 @@ data/*
 # Ignore generated checkpoints/results but keep the directory structure
 output/*
 !output/.gitkeep
+
+# Ignore config.yaml
+config.yaml
