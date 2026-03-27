@@ -13,7 +13,7 @@
 For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
-- Configure paths in `config.yaml` ([Configuration](#configuration))
+- Configure paths in `config.yaml` by copying `config-example.yaml`  ([Configuration](#configuration))
 - Put images in `data` folder and organize validation data by running `organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
   - Training: `train_eo_alignment.py`
@@ -22,8 +22,10 @@ For running the code, please follow these steps:
 
 Feel free to reach out if you have any questions or issues.
 
+---
+
 ## Solution Overview
-This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PVBS workshop.
+This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PBVS workshop.
 
 The solution proposes a cross-modal alignment framework that exploits the robust image recognition capabilities of the newly released DINOv3 foundation model.
 We employ feature matching to align a trainable Synthetic Aperture Radar (SAR) feature space to a frozen Electro-Optical (EO) reference.
@@ -37,20 +39,20 @@ This completely avoids the overconfidence flaws of standard logits or softmax pr
 
 
 ## Results
-Team IDCOM achieved 3th place overall with a total score of 0.38.
+Team IDCOM achieved 3rd place overall with a total score of 0.38.
 
 **Performance metrics**:
  - Accuracy (Top-1): **24.8** %
  - AUROC: **0.78** (Competition Best)
  - TNR@TPR95: **0.27** (Competition Best)
 
-----
+---
 
 ## Installation
 
 Major requirements:
  - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
- - DINOv3 weights: DINOv3 weights can be downloaded from the [official repo](https://github.com/facebookresearch/dinov3). 
+ - DINOv3 weights: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights. 
  - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
 
@@ -61,7 +63,7 @@ Requirements can be installed with `pip`:
 
 For a quick rundown of how to use the DINOv3 model, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb).
 
-
+---
 ## Configuration
 
 All paths are configured in a single `config.yaml` file in the project root. To get started:
@@ -69,27 +71,28 @@ All paths are configured in a single `config.yaml` file in the project root. To 
 cp config.example.yaml config.yaml
 ```
 
-Then edit `config.yaml` with your local paths. The two entries that always require updating are the DINOv3 repo and weights paths, as these live outside the project directory. Dataset paths can be left as defaults if you place the MAVIC-C data in the `data/` folder (see [Data Setup](#data-setup) below).
+Then edit `config.yaml` with your paths. The two entries that **always require updating** are the DINOv3 repo and weights paths. Dataset paths can be left as defaults if you place the MAVIC-C data in the `data/` folder (see [Data Setup](#data-setup) below).
 ```yaml
 paths:
-  dino_repo: "/path/to/dinov3"          # ← must update
-  dino_weights: "/path/to/weights.pth"  # ← must update
+  dino_repo: "/path/to/dinov3"          # MUST UPDATE
+  dino_weights: "/path/to/weights.pth"  # MUST UPDATE
   train_sar: "./data/train/SAR_Train"   # default, change if needed
   ...
 ```
 
 > **Note:** Paths can be absolute or relative. Relative paths are resolved from the
 > project root (where `config.yaml` lives), not from the `src/` directory.
-> `config.yaml` is listed in `.gitignore` and will not be committed to the repository.
+> 
+>`config.yaml` is listed in `.gitignore` and will not be committed to the repository.
 
-----
+---
 
 ## Data Setup
 
 Data can be downloaded from the [competition website](https://www.codabench.org/competitions/12529/).
 
 Place the MAVIC-C 2025 dataset in the `data/` folder. The expected structure is:
-````
+```
 data/
 ├── train/                      # training images (as provided by organizers)
 │   ├── SAR_Train/
@@ -98,7 +101,7 @@ data/
 ├── val_organized/              # organized validation images (see below)
 ├── validation_reference.csv    # provided by organizers
 └── test/                       # test images (as provided by organizers)
-````
+```
 
 ### Organizing the Validation Data
  
@@ -127,9 +130,8 @@ val_organized/
 ```
  
 Make sure the `val_organized` path in your `config.yaml` points to this folder.
- 
----
 
+---
 
 ## Usage
 
@@ -140,6 +142,9 @@ Below is an overview of how to use the solution. If you need any help running th
 1. **Training the Model**
 To train the SAR backbone with LoRA and MMD alignment using the EO reference data, run:
 
-2. Inference and OOD Detection:
+2. **Feature Extraction**
+To extract features from the SAR backbone,
+
+3. Inference and OOD Detection:
 
 
