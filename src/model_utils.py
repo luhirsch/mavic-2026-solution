@@ -26,10 +26,11 @@ def load_dino_model(model_type, weights_file, repo_dir):
         print(f"Warning: DINOv3 not found at {repo_dir}")
         sys.exit(-1)
 
-    model = torch.hub.load(repo_dir,
+    model = torch.hub.load(
+                            str(repo_dir), # torch.hub requires str, not Path
                            model=model_type,
                            source='local',
-                           weights=weights_file,
+                           weights=str(weights_file), # DINOv3 internals pass this to urlparse
                            trust_repo=True)  # Local
     print(f"{model_type} loaded successfully")
 
