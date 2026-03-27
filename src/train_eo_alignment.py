@@ -33,7 +33,8 @@ from pathlib import Path
 #  DIRECTORY SETTINGS (obtained from config.yaml)
 # ==============================================
 
-with open("config.yaml") as f:
+CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+with open(CONFIG_PATH) as f:
     cfg = yaml.safe_load(f)
 
 # DINOv3 weights - Please update with your paths
@@ -73,6 +74,7 @@ CONFIG = {
     # Loss configuration
     "LAMBDA_ALIGN": 0.45,
 }
+RANDOM_SEED = 15
 SAVE_PATH = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -186,15 +188,24 @@ def run_training():
     val_ds = datasets.ImageFolder(VAL_DATA, transform=transform)
 
 
-    # --- Set up PyTorch DataLoaders ---
-    # Create Sampler and Dataloader
+    # --- Set up PyTorch DataLoaders and Sampler---
+    # Get weights for the WeightedRandomSampler
     print("Calculating sampler weights...")
     targets = train_sar_ds.targets
     class_counts = np.bincount(targets)
     weights = 1. / (class_counts + 1e-5)
     samples_weights = weights[targets]
-    sampler = WeightedRandomSampler(samples_weights, num_samples=len(samples_weights), replacement=True)
 
+    # Set seed and create sampler
+    generator = torch.Generator()
+    generator.manual_seed(RANDOM_SEED)
+    sampler = WeightedRandomSampler(samples_weights,
+                                    num_samples=len(samples_weights),
+                                    generator=generator,
+                                    replacement=True)
+
+
+    # Create DataLoaders
     train_loader = DataLoader(train_paired_ds, batch_size=CONFIG["BATCH_SIZE"], sampler=sampler, num_workers=4)
     val_loader = DataLoader(val_ds, batch_size=CONFIG["BATCH_SIZE"], shuffle=False, num_workers=4)
 
