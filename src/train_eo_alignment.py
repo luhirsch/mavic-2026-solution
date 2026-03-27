@@ -5,22 +5,7 @@ Purpose: Fine-tunes a SAR DINOv3 (ViT-S+) backbone using LoRA adapters,
          features with a frozen EO reference model. Handles class imbalance
          using a dynamically oversampled WeightedRandomSampler.
 
-Things to update:
- - DINO_WEIGHTS - Please update with your paths
- - DINO_REPO - Please download from https://github.com/facebookresearch/dinov3 anbd update with your paths
- - Data - Please put MAVIC-C 2025 data in the "data" folder:
-    - TRAIN_DATA_SAR: Path to the directory containing SAR training images
-    - TRAIN_DATA_EO: Path to the directory containing EO training images
-    - VAL_DATA: Path to the directory containing validation images
- - OUTPUT_DIR: Path to the directory where model checkpoints and other outputs will be saved
-
-Settings:
-    - EPOCHS: Number of training epochs
-    - LR: Learning rate
-    - BATCH_SIZE: Batch size
-    - LORA_R: Rank (r) of the LoRA adapter
-    - LORA_ALPHA: Alpha parameter of the LoRA adapter
-    - LORA_DROPOUT: Dropout probability of the LoRA adapter
+Update: ** please update config.yaml **
 
 Outputs:
     - Model Checkpoint: Saves the best model based on F1-score on the validation set
@@ -39,24 +24,27 @@ import numpy as np
 from mmd_loss import MMDLoss
 import model_utils
 import yaml
-import pathlib
+from pathlib import Path
 
 
 
 # %%
 # ==============================================
-#  DIRECTORY SETTINGS (obtained from config.yaml
+#  DIRECTORY SETTINGS (obtained from config.yaml)
 # ==============================================
 
+with open("config.yaml") as f:
+    cfg = yaml.safe_load(f)
+
 # DINOv3 weights - Please update with your paths
-DINO_WEIGHTS = "..\..\dino_vit_s_weights\dinov3_vits16plus_pretrain_lvd1689m-4057cbaa.pth"
-DINO_REPO = "..\..\dinov3"
+DINO_WEIGHTS = Path(cfg["paths"]["dino_weights_vits_plus"])
+DINO_REPO = Path(cfg["paths"]["dino_repo"])
 
 
 # Data - Put MAVIC-C 2025 data in the "data" folder or update with your paths
-TRAIN_DATA_SAR = "./data/MAVIC_C_2025/train/SAR_Train"
-TRAIN_DATA_EO = "./data/MAVIC_C_2025/train/EO_Train"
-VAL_DATA = "./data/MAVIC_C_2025/val_organized" # This folder is obtained after running "organize_mavic_val_into_folders"
+TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
+TRAIN_DATA_EO = Path(cfg["paths"]["train_eo"])
+VAL_DATA = Path(cfg["paths"]["val_organized"]) # This folder is obtained after running "organize_mavic_val_into_folders"
 
 # Outputs (model checkpoint)
 # The model will be saved in the "output" folder as a .pth file
