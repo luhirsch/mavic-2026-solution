@@ -28,6 +28,9 @@ else: # Linux
 import myutils
 import dino_utils
 
+# TODO
+# Extract features from ViT-L sat for training images for Mahalanbosi and TTA for test images
+
 # %%
 # --- CONFIG ---
 # Path to your RAW test images (not the features, the actual .png files)

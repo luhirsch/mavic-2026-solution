@@ -4,13 +4,12 @@ import pandas as pd
 from tqdm import tqdm
 
 """
-Script to organize the validation folder into subfodlers for each class based on the reference
+Script to organize the validation folder into SUBFOLDERS for each CLASS based on the reference
 given in validation_reference.csv
 
-validation_reference.csv
-
-Separates the images into ID and OOD folders.
-The ID images are organized into subfolders based on the class name.
+Steps:
+ 1. Separates the images into ID and OOD folders.
+ 2. The ID images are organized into subfolders based on the class name.
 """
 
 # --- CONFIGURATION ---

@@ -13,9 +13,12 @@
 For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
-- Configure paths ([Configuration](#configuration))
-- Put images in `data` folder and organize validation data ([Data Setup](#data-setup))
-- Run training and inference ([Usage](#usage))
+- Configure paths in `config.yaml` ([Configuration](#configuration))
+- Put images in `data` folder and organize validation data by running `organize_val_data.py` ([Data Setup](#data-setup))
+- Run training, feature extraction and inference ([Usage](#usage))
+  - Training: `train_eo_alignment.py`
+  - Feature extraction: `extract_features.py`
+  - Inference: `inference.py`
 
 Feel free to reach out if you have any questions or issues.
 
@@ -26,7 +29,7 @@ The solution proposes a cross-modal alignment framework that exploits the robust
 We employ feature matching to align a trainable Synthetic Aperture Radar (SAR) feature space to a frozen Electro-Optical (EO) reference.
 
 A core component of the architecture is the decoupling of the image classification and the Out of Distribution (OOD) detection.
-A simple linear classifier handles classifiation, while OOD confidence scores are computed independently as the minimum Mahalanobis distance to class centroids in feature space.
+A simple linear classifier handles classification, while OOD confidence scores are computed independently as the minimum Mahalanobis distance to class centroids in feature space.
 This completely avoids the overconfidence flaws of standard logits or softmax probabilities.
 
 ![plot](./IDCOM_Architecture.png)
@@ -109,7 +112,7 @@ provided to do this automatically. Run it from the `data/` folder:
  
 ```bash
 cd data
-python organize_mavic_val_data_into_folders.py
+python organize_val_data.py
 ```
  
 This will create a `val_organized/` folder with the following structure:
