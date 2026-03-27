@@ -1,0 +1,18 @@
+# config.example.yaml
+# Copy this file to config.yaml and fill in your paths before running.
+
+
+paths:
+  # DINOv3 - download weights and clone repo from: <link here>
+  dino_weights: "/path/to/dinov3_vits16plus_pretrain.pth"
+  dino_repo: "/path/to/dinov3"
+
+  # MAVIC-C 2025 dataset - place in ./data or update paths below
+  # val_data should point to the output of organize_mavic_val_into_folders.py
+  train_sar: "./data/MAVIC_C_2025/train/SAR_Train"
+  train_eo: "./data/MAVIC_C_2025/train/EO_Train"
+  val_data: "./data/MAVIC_C_2025/val_organized"
+
+  # Model checkpoint output
+  output_dir: "./output"
+
