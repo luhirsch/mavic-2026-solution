@@ -38,16 +38,14 @@ from sklearn.metrics import f1_score
 import numpy as np
 from mmd_loss import MMDLoss
 import model_utils
+import yaml
+import pathlib
 
-# TODO: do the following
-# 5. Add script that organizes VALIDATION data
-
-# ========
 
 
 # %%
 # ==============================================
-#  DIRECTORY SETTINGS (UPDATE WITH YOUR PATHS)
+#  DIRECTORY SETTINGS (obtained from config.yaml
 # ==============================================
 
 # DINOv3 weights - Please update with your paths
@@ -55,10 +53,10 @@ DINO_WEIGHTS = "..\..\dino_vit_s_weights\dinov3_vits16plus_pretrain_lvd1689m-405
 DINO_REPO = "..\..\dinov3"
 
 
-# Data - Please put MAVIC-C 2025 data in the "data" folder:
+# Data - Put MAVIC-C 2025 data in the "data" folder or update with your paths
 TRAIN_DATA_SAR = "./data/MAVIC_C_2025/train/SAR_Train"
 TRAIN_DATA_EO = "./data/MAVIC_C_2025/train/EO_Train"
-VAL_DATA = "./data/MAVIC_C_2025/val"
+VAL_DATA = "./data/MAVIC_C_2025/val_organized" # This folder is obtained after running "organize_mavic_val_into_folders"
 
 # Outputs (model checkpoint)
 # The model will be saved in the "output" folder as a .pth file

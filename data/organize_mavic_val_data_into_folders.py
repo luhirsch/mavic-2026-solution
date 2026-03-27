@@ -7,9 +7,12 @@ from tqdm import tqdm
 Script to organize the validation folder into subfodlers for each class based on the reference
 given in validation_reference.csv
 
+validation_reference.csv
+
 Separates the images into ID and OOD folders.
 The ID images are organized into subfolders based on the class name.
 """
+
 # --- CONFIGURATION ---
 CSV_PATH = 'validation_reference.csv'
 SOURCE_DIR = 'val'  # Folder containing the raw images
