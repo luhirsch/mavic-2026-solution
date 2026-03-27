@@ -4,9 +4,20 @@
 
 **Authors**: [Lucas Hirsch](https://luhirsch.github.io/), [Mike Davies](https://eng.ed.ac.uk/about/people/professor-michael-e-davies)
 
-**Affiliation**: Institute for Imaging, Data and Communications (IDCOM), University of Edinburgh, UK
+**Affiliation**: Institute for Imaging, Data and Communications (IDCOM), School of Engineering, University of Edinburgh, UK
 
-*View the official [CodaBench Results Leaderboard](https://www.codabench.org/competitions/12529/#/results-tab)*
+*View the official [CodaBench Leaderboard](https://www.codabench.org/competitions/12529/)*
+
+
+## Quickstart
+For running the code, please follow these steps:
+
+- Install required packages and download DINOv3 weights ([Installation](#installation))
+- Configure paths ([Configuration](#configuration))
+- Put images in `data` folder and organize validation data ([Data Setup](#data-setup))
+- Run training and inference ([Usage](#usage))
+
+Feel free to reach out if you have any questions or issues.
 
 ## Solution Overview
 This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PVBS workshop.
@@ -72,16 +83,18 @@ paths:
 
 ## Data Setup
 
-Place the MAVIC-C 2025 dataset in the `data/` folder **OR** update the paths in `config.yaml` accordingly. The expected structure is:
+Data can be downloaded from the [competition website](https://www.codabench.org/competitions/12529/).
+
+Place the MAVIC-C 2025 dataset in the `data/` folder. The expected structure is:
 ````
 data/
-├── train/
+├── train/                      # training images (as provided by organizers)
 │   ├── SAR_Train/
 │   └── EO_Train/
 ├── val/                        # raw validation images (as provided by organizers)
 ├── val_organized/              # organized validation images (see below)
 ├── validation_reference.csv    # provided by organizers
-└── test/
+└── test/                       # test images (as provided by organizers)
 ````
 
 ### Organizing the Validation Data
@@ -96,7 +109,7 @@ provided to do this automatically. Run it from the `data/` folder:
  
 ```bash
 cd data
-python ../organize_mavic_val_data_into_folders.py
+python organize_mavic_val_data_into_folders.py
 ```
  
 This will create a `val_organized/` folder with the following structure:
