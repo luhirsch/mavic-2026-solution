@@ -1,6 +1,6 @@
 # Team IDCOM Solution: 5th Multi-modal Aerial View Imagery Challenge: Classification (MAVIC-C)
 
-### 4th Place Overall | 1st Place for OOD Detection (Best AUROC & TNR@TPR95)
+### 3rd Place Overall | 1st Place for OOD Detection (Best AUROC & TNR@TPR95)
 
 **Authors**: [Lucas Hirsch](https://luhirsch.github.io/), [Mike Davies](https://eng.ed.ac.uk/about/people/professor-michael-e-davies)
 
