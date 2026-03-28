@@ -39,8 +39,7 @@ DINO_REPO = Path(cfg["paths"]["dino_repo"])
 TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
 TEST_DATA_SAR = Path(cfg["paths"]["test"]) # This folder is obtained after running "organize_mavic_val_into_folders"
 
-# Outputs (model checkpoint)
-# The model will be saved in the "output" folder as a .pth file
+# Outputs (feature embeddings)
 OUTPUT_DIR = "./output"
 SAVE_PATH_TRAIN = os.path.join(OUTPUT_DIR, "train_features_vitl_sat.pt")
 SAVE_PATH_TEST = os.path.join(OUTPUT_DIR, "test_features_TTA.pt")
@@ -173,10 +172,6 @@ def main():
     )
     model.to(DEVICE)
     model.eval()
-
-    # Freeze model parameters to save memory
-    for param in model.parameters():
-        param.requires_grad = False
 
     # Execute extractions
     print("\n--- Extracting Train Features ---")

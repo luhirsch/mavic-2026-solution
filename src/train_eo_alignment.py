@@ -37,12 +37,12 @@ CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     cfg = yaml.safe_load(f)
 
-# DINOv3 weights - Please update with your paths
+# DINOv3 weights - Please update config.yaml with your paths
 DINO_WEIGHTS = Path(cfg["paths"]["dino_weights_vits_plus"])
 DINO_REPO = Path(cfg["paths"]["dino_repo"])
 
 
-# Data - Put MAVIC-C 2025 data in the "data" folder or update with your paths
+# Data - Put MAVIC-C 2025 data in the "data" folder
 TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
 TRAIN_DATA_EO = Path(cfg["paths"]["train_eo"])
 VAL_DATA = Path(cfg["paths"]["val_organized"]) # This folder is obtained after running "organize_mavic_val_into_folders"

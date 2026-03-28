@@ -14,11 +14,12 @@ For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
 - Configure paths in `config.yaml` by copying `config-example.yaml`  ([Configuration](#configuration))
-- Put images in `data` folder and organize validation data by running `organize_val_data.py` ([Data Setup](#data-setup))
+- Put images in `data` folder and organize validation data by running `data/organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
-  - Training: `train_eo_alignment.py`
-  - Feature extraction: `extract_features.py`
-  - Inference: `inference.py`
+  - Training: `src/train_eo_alignment.py`
+  - Feature extraction: `src/extract_features.py`
+  - Inference: `src/inference.py`
+- Final results are saved in `submission.csv`
 
 Feel free to reach out if you have any questions or issues.
 
@@ -55,6 +56,7 @@ Major requirements:
  - DINOv3 weights: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights. 
  - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
+Other standard packages like `numpy`, `pandas`, `scikit-learn`, etc. are also required. 
 
 Requirements can be installed with `pip`:
 
