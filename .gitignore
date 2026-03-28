@@ -14,3 +14,4 @@ output/*
 
 # Ignore config.yaml
 config.yaml
+submission.csv
