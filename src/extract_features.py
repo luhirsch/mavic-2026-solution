@@ -1,129 +1,191 @@
-import torch
-from torchvision.transforms import v2
-from torchvision import datasets
-from torch.utils.data import DataLoader, Dataset
-from PIL import Image
+"""
+Script: extract_features.py
+Purpose: Extracts feature embeddings using the DINOv3 model.
+         Processes the SAR training dataset and processes the SAR test dataset using
+         Test-Time Augmentation (TTA) by averaging features across 5 augmented views.
+         These features are saved to disk and will be used for training the
+         Mahalanobis OOD detector in inference.py.
+
+Outputs:
+    - Training features: Features for the SAR training dataset (SAVE_PATH_TRAIN)
+    - TTA Test features: TTA Features for the SAR test dataset (SAVE_PATH_TEST)
+"""
+
+
 import os
-import torch.nn.functional as F
+import torch
+from torch.utils.data import DataLoader, Dataset
+from torchvision import datasets
+from PIL import Image
+import yaml
+from pathlib import Path
 
-## For setting current directory and working with files
-import os, sys, platform
-
-wd=os.getcwd()
-print(wd)
-
-# Setting path based on current platform, so I can import my libraries
-windowsPath = r"M:\projects"
-linuxPath = "/home/s2807393/RDS/projects"
-
-# Choose path based on system
-if platform.system() == "Windows":
-    sys.path.append(windowsPath)
-    PROJECT_FOLDER = windowsPath
-else: # Linux
-    sys.path.append(linuxPath)
-    PROJECT_FOLDER = linuxPath
-
-# My utility functions
-import myutils
-import dino_utils
-
-# TODO
-# Extract features from ViT-L sat for training images for Mahalanbosi and TTA for test images
+import model_utils
 
 # %%
-# --- CONFIG ---
-# Path to your RAW test images (not the features, the actual .png files)
-TEST_IMG_DIR = "/home/s2807393/RDS/projects/data/MAVIC_C_2025/test"
-MODEL_NAME = "vits_plus" #"convnext_l" # "vitl_sat" #"vith_plus#
+# ==============================================
+#  DIRECTORY SETTINGS (obtained from config.yaml)
+# ==============================================
 
-OUTPUT_PATH = "/home/s2807393/RDS/projects/dino_tests/dino_" + MODEL_NAME + "_unicornv2_test_features_TTA.pt"
+CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
+with open(CONFIG_PATH) as f:
+    cfg = yaml.safe_load(f)
+
+# DINOv3 weights - Please update with your paths
+DINO_WEIGHTS = Path(cfg["paths"]["dino_weights_vitl_sat"]) # Use SAT model for OOD Detection
+DINO_REPO = Path(cfg["paths"]["dino_repo"])
+
+# Data - Put MAVIC-C 2025 data in the "data" folder or update with your paths
+TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
+TEST_DATA_SAR = Path(cfg["paths"]["test"]) # This folder is obtained after running "organize_mavic_val_into_folders"
+
+# Outputs (model checkpoint)
+# The model will be saved in the "output" folder as a .pth file
+OUTPUT_DIR = "./output"
+SAVE_PATH_TRAIN = os.path.join(OUTPUT_DIR, "train_features_vitl_sat.pt")
+SAVE_PATH_TEST = os.path.join(OUTPUT_DIR, "test_features_TTA.pt")
 
 
-# %% Select device (GPU or CPU)
-if torch.cuda.is_available():
-    device = myutils.get_freer_gpu()
-else:
-    device = "cpu"
-print(f"Using {device} device")
+# %%
+# ==========================================
+#        EXTRACTION SETTINGS
+# ==========================================
 
 # Load Model
-model, _ = dino_utils.load_dino_model(model_type=MODEL_NAME)
-model.to(device)
-model.eval()
+MODEL_TYPE = "dinov3_vitl16"
+IMAGE_SIZE_MAHA = 256
+BATCH_SIZE = 64
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# --- TTA TRANSFORM ---
-# We defined 5 views:
-# 1. Standard
-# 2. Horizontal Flip
-# 3. Slight Zoom (110%) -> Center Crop
-# 4. Brighter
-# 5. Darker
-tta_transform = dino_utils.make_tta_transforms(model_type=MODEL_NAME, resize_size=256)
 
 # %% # Custom Dataset that returns List of 5 images instead of 1
-class TTADataset(Dataset):
-    def __init__(self, root,):
-        self.root = root
-        self.imgs = sorted([f for f in os.listdir(root) if f.lower().endswith(('.png', '.jpg'))])
-        self.transforms = tta_transform
+# ==========================================
+#        DATASET
+# ==========================================
 
+class TTADataset(Dataset):
+    """
+    Custom Dataset that returns a stack of 5 augmented views per image.
+    Returns the filename instead of a dummy label for submission tracking.
+    """
+
+    def __init__(self, root, resize_size=128):
+        self.root = root
+        self.imgs = sorted([f for f in os.listdir(root) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tif'))])
+        self.transforms = model_utils.make_tta_transforms(resize_size=resize_size)
 
     def __getitem__(self, idx):
-        path = os.path.join(self.root, self.imgs[idx])
+        img_name = self.imgs[idx]
+        path = os.path.join(self.root, img_name)
         img = Image.open(path).convert("RGB")
 
-        # Apply all transforms and stack them: [N_views, 3, 256, 256]
+        # Apply all transforms and stack them: [N_views, 3, H, W]
         aug_imgs = torch.stack([t(img) for t in self.transforms])
-        return aug_imgs, 0  # Dummy label
+
+        # Return the filename instead of the dummy label
+        return aug_imgs, img_name
 
     def __len__(self):
         return len(self.imgs)
 
+# %%
+# %%
+# ==========================================
+#        EXTRACTION FUNCTIONS
+# ==========================================
 
-def extract_features_tta():
-    dataset = TTADataset(TEST_IMG_DIR)
-    loader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=4)
+def extract_train_features(model):
+    """Extracts standard single-view features for the training dataset."""
+    print(f"\n--- Preparing Train Dataset ---")
+    train_transform = model_utils.make_dino_transform(resize_size=IMAGE_SIZE_MAHA)
+    train_ds = datasets.ImageFolder(TRAIN_DATA_SAR, transform=train_transform)
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
-    all_features = []
-
-    print(f"Extracting TTA features for {len(dataset)} images...")
-    ii  = 0
-    total_images = len(dataset)
+    print(f"--- Extracting Train Features ({len(train_ds)} images) ---")
+    train_features = []
+    train_labels = []
 
     with torch.no_grad():
-        for batch_imgs, _ in loader:
-            ii = ii + 1
-            # batch_imgs shape: [Batch, Views(5), Channels, H, W]
-            b, v, c, h, w = batch_imgs.shape
+        for i, (images, labels) in enumerate(train_loader):
+            images = images.to(DEVICE)
+            feats = model(images)
 
-            # Flatten to: [Batch*Views, C, H, W]
-            flat_imgs = batch_imgs.view(b * v, c, h, w).to(device)
+            train_features.append(feats.cpu())
+            train_labels.append(labels.cpu())
 
-            # Extract features
-            features = model(flat_imgs)  # [Batch*Views, Dim]
+            if i % 20 == 0:
+                print(f"Train Extraction: Batch {i}/{len(train_loader)}")
 
-            # Reshape back to [Batch, Views, Dim]
-            features = features.view(b, v, -1)
+    train_features = torch.cat(train_features, dim=0)
+    train_labels = torch.cat(train_labels, dim=0)
 
-            # MEAN POOLING over the Views dimension
-            # This averages the features of the 3 or 5 augmentations
-            avg_features = features.mean(dim=1)
-
-            all_features.append(avg_features.cpu())
-
-            processed_count = ii * loader.batch_size
-            if ii % 20 == 0:
-                pct_done = processed_count/total_images * 100
-                print(f"Batch {ii+1}: Processed {processed_count} out of {total_images} images - {pct_done}% done...")
+    torch.save({"features": train_features, "labels": train_labels}, SAVE_PATH_TRAIN)
+    print(f">>> Saved train features to {SAVE_PATH_TRAIN} | Shape: {train_features.shape}")
 
 
-    final_features = torch.cat(all_features, dim=0)
+def extract_test_features_tta(model):
+    """Extracts Multi-view (TTA) features for the test dataset and averages them."""
+    print(f"\n--- Preparing Test Dataset (TTA) ---")
+    test_ds = TTADataset(TEST_DATA_SAR, resize_size=IMAGE_SIZE_MAHA)
+    test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
-    # Save in the same format as before so your other scripts work
-    torch.save({'features': final_features, 'labels': torch.zeros(len(dataset))}, OUTPUT_PATH)
-    print(f"Saved TTA Features to {OUTPUT_PATH}")
+    print(f"--- Extracting Test Features with TTA ({len(test_ds)} images) ---")
+    test_features = []
+    test_filenames = []
+
+    with torch.no_grad():
+        for i, (images, filenames) in enumerate(test_loader):
+            # images shape: [B, 5, 3, H, W]
+            b, n_views, c, h, w = images.shape
+
+            # Reshape to [B*5, 3, H, W] to pass through the model
+            images = images.view(-1, c, h, w).to(DEVICE)
+
+            feats = model(images)  # Output shape: [B*5, D]
+
+            # Reshape back to [B, 5, D] and average across the 5 views
+            feats = feats.view(b, n_views, -1)
+            averaged_feats = feats.mean(dim=1)  # Final shape: [B, D]
+
+            test_features.append(averaged_feats.cpu())
+            test_filenames.extend(filenames)
+
+            if i % 20 == 0:
+                print(f"Test Extraction (TTA): Batch {i}/{len(test_loader)}")
+
+    test_features = torch.cat(test_features, dim=0)
+
+    torch.save({"features": test_features, "filenames": test_filenames}, SAVE_PATH_TEST)
+    print(f">>> Saved test TTA features to {SAVE_PATH_TEST} | Shape: {test_features.shape}")
+
+
+# %%
+# ==========================================
+#        MAIN EXECUTION
+# ==========================================
+
+def main():
+    print(f"--- Loading {MODEL_TYPE} Backbone ---")
+    model = model_utils.load_dino_model(
+        model_type=MODEL_TYPE,
+        weights_file=DINO_WEIGHTS,
+        repo_dir=DINO_REPO
+    )
+    model.to(DEVICE)
+    model.eval()
+
+    # Freeze model parameters to save memory
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # Execute extractions
+    print("\n--- Extracting Train Features ---")
+    extract_train_features(model)
+    print("\n--- Extracting Test Features ---")
+    extract_test_features_tta(model)
+
+    print("\nDone!.")
 
 
 if __name__ == "__main__":
-    extract_features_tta()
+    main()

@@ -74,7 +74,7 @@ CONFIG = {
     # Loss configuration
     "LAMBDA_ALIGN": 0.45,
 }
-RANDOM_SEED = 15
+RANDOM_SEED = 999
 SAVE_PATH = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
