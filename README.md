@@ -51,8 +51,6 @@ Team IDCOM achieved 3rd place overall with a total score of 0.38.
 
 ## Installation
 
-## Installation
-
 Major requirements:
  - DINOv3: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights.
  - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
