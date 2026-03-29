@@ -14,7 +14,7 @@ For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
 - Configure paths in `config.yaml`. Start by copying `config-example.yaml`  ([Configuration](#configuration))
-- Put images in `data` folder and organize validation data by running `data/organize_val_data.py` ([Data Setup](#data-setup))
+- Put images in `data` folder and organize validation data by running `cd data; python organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
   - Training: `src/train_eo_alignment.py`
   - Feature extraction: `src/extract_features.py`
@@ -51,19 +51,25 @@ Team IDCOM achieved 3rd place overall with a total score of 0.38.
 
 ## Installation
 
+## Installation
+
 Major requirements:
  - DINOv3: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights.
  - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
  - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
-Other standard packages like `numpy`, `pandas`, `scikit-learn`, etc. are also required. 
+Other standard packages like `numpy`, `pandas`, `scikit-learn`, etc. are also required.
 
-Requirements can be installed with `pip`:
+> **Note:** PyTorch and torchvision are not included in `requirements.txt` as they
+> require a manual installation depending on your CUDA version. Install them first
+> from [pytorch.org](https://pytorch.org/get-started/locally/), then install the
+> remaining requirements with:
+> ```bash
+> pip install -r requirements.txt
+> ```
 
-```pip install -r requirements.txt```
 
-
-For a quick rundown of how to use the DINOv3 model, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb).
+**Optional:** For a quick rundown of how to use the DINOv3 model, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb).
 
 ---
 ## Configuration
