@@ -13,7 +13,7 @@
 For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
-- Configure paths in `config.yaml` by copying `config-example.yaml`  ([Configuration](#configuration))
+- Configure paths in `config.yaml`. Start by copying `config-example.yaml`  ([Configuration](#configuration))
 - Put images in `data` folder and organize validation data by running `data/organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
   - Training: `src/train_eo_alignment.py`
@@ -28,7 +28,7 @@ Feel free to reach out if you have any questions or issues.
 ## Solution Overview
 This repository contains Team IDCOM's solution to the MAVIC-C 2026 competition held at CVPR as part of the PBVS workshop.
 
-The solution proposes a cross-modal alignment framework that exploits the robust image recognition capabilities of the newly released DINOv3 foundation model.
+The solution proposes a cross-modal alignment framework that exploits the image recognition capabilities of the newly released DINOv3 foundation model.
 We employ feature matching to align a trainable Synthetic Aperture Radar (SAR) feature space to a frozen Electro-Optical (EO) reference.
 
 A core component of the architecture is the decoupling of the image classification and the Out of Distribution (OOD) detection.
@@ -52,8 +52,8 @@ Team IDCOM achieved 3rd place overall with a total score of 0.38.
 ## Installation
 
 Major requirements:
+ - DINOv3: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights.
  - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
- - DINOv3 weights: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights. 
  - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
 Other standard packages like `numpy`, `pandas`, `scikit-learn`, etc. are also required. 
@@ -84,8 +84,7 @@ paths:
 
 > **Note:** Paths can be absolute or relative. Relative paths are resolved from the
 > project root (where `config.yaml` lives), not from the `src/` directory.
-> 
->`config.yaml` is listed in `.gitignore` and will not be committed to the repository.
+> `config.yaml` is listed in `.gitignore` and will not be committed to the repository.
 
 ---
 
@@ -131,7 +130,7 @@ val_organized/
 └── OOD/
 ```
  
-Make sure the `val_organized` path in your `config.yaml` points to this folder.
+Make sure the `val_organized_iid` and `val_organized_ood` paths in your `config.yaml` point to the correct folders.
 
 ---
 
@@ -141,12 +140,27 @@ Below is an overview of how to use the solution. If you need any help running th
 
 0. For help using DINOv3, please check out the file [DINOv3_quickstart.ipynb](DINOv3_quickstart.ipynb) or refer to the [official repo](https://github.com/facebookresearch/dinov3)
 
-1. **Training the Model**
-To train the SAR backbone with LoRA and MMD alignment using the EO reference data, run:
+1. **Training the Model**  
+   To train the SAR backbone with LoRA and MMD alignment using the EO reference data, run:
+```bash
+   python src/train_eo_alignment.py
+```
+  This will save the best model checkpoint (based on validation F1-score) as a `.pth` file in the `output/` directory as configured in `config.yaml`.
 
-2. **Feature Extraction**
-To extract features from the SAR backbone,
+2. **Feature Extraction**  
+   To extract features from the SAR backbone, run:
+```bash
+   python src/extract_features.py
+```
+  This produces two `.pt` files:
+   - **Training features**: used to fit the Mahalanobis OOD detector (class-conditional mean and covariance). This features are obtained from the DINOv3 ViT-L satellite model.
+   - **Test features**: TTA-augmented features used at inference time for OOD scoring.
 
-3. Inference and OOD Detection:
+3. **Inference and OOD Detection**  
+   To run inference and generate the competition submission, run:
+```bash
+   python src/inference.py
+```
+   This classifies the test images, scores them using the Mahalanobis detector and outputs a `submission.csv`.
 
 
