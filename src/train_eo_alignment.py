@@ -45,12 +45,12 @@ DINO_REPO = Path(cfg["paths"]["dino_repo"])
 # Data - Put MAVIC-C 2025 data in the "data" folder
 TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
 TRAIN_DATA_EO = Path(cfg["paths"]["train_eo"])
-VAL_DATA = Path(cfg["paths"]["val_organized"]) # This folder is obtained after running "organize_mavic_val_into_folders"
+VAL_DATA = Path(cfg["paths"]["val_organized_iid"]) # This folder is obtained after running "organize_mavic_val_into_folders"
 
 # Outputs (model checkpoint)
 # The model will be saved in the "output" folder as a .pth file
-OUTPUT_DIR = "./output"
-
+OUTPUT_DIR = Path(cfg["paths"]["output_dir"])
+MODEL_CHECKPOINT = Path(cfg["paths"]["model_checkpoint"])
 
 # %%
 # ==========================================
@@ -63,7 +63,7 @@ CONFIG = {
     "BATCH_SIZE": 256,
     "EPOCHS": 25,
     "LR": 0.8e-5,
-    "CHECKPOINT_NAME": f"{MODEL_TYPE}_LoRA_finetune_{IMAGE_SIZE}.pth",
+    "CHECKPOINT_NAME": MODEL_CHECKPOINT,
 
     # LoRA Configuration
     "LORA_R": 28,

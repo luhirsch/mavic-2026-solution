@@ -35,13 +35,16 @@ DINO_WEIGHTS_VITS = Path(cfg["paths"]["dino_weights_vits_plus"])
 TEST_DIR = Path(cfg["paths"]["test"])
 
 # Outputs (submission CSV)
-OUTPUT_DIR = "./output"
+OUTPUT_DIR = Path(cfg["paths"]["output_dir"])
 OUTPUT_CSV = os.path.join("submission.csv")
 
 # Features
 TRAIN_FEATURES_MAHA = os.path.join(OUTPUT_DIR, "train_features_vitl_sat.pt") # Train features for Mahalanbis
 TEST_FEATURES_MAHA = os.path.join(OUTPUT_DIR, "test_features_TTA.pt") # Test TTA features for Mahalanbis
 
+# Saved model checkpoint
+CHECKPOINT_NAME = Path(cfg["paths"]["model_checkpoint"])
+CHECKPOINT_PATH = os.path.join(OUTPUT_DIR, CHECKPOINT_NAME)
 
 # ==========================================
 # 1. SETTINGS
@@ -59,8 +62,6 @@ LORA_CONFIG = {
     "LORA_DROPOUT": 0.05,
 }
 
-CHECKPOINT_NAME = f"{MODEL_TYPE}_LoRA_finetune_{IMAGE_SIZE}.pth"
-CHECKPOINT_PATH = os.path.join(OUTPUT_DIR, CHECKPOINT_NAME)
 
 
 # ---- Class Mappings ----

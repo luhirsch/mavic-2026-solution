@@ -40,7 +40,7 @@ TRAIN_DATA_SAR = Path(cfg["paths"]["train_sar"])
 TEST_DATA_SAR = Path(cfg["paths"]["test"]) # This folder is obtained after running "organize_mavic_val_into_folders"
 
 # Outputs (feature embeddings)
-OUTPUT_DIR = "./output"
+OUTPUT_DIR = Path(cfg["paths"]["output_dir"])
 SAVE_PATH_TRAIN = os.path.join(OUTPUT_DIR, "train_features_vitl_sat.pt")
 SAVE_PATH_TEST = os.path.join(OUTPUT_DIR, "test_features_TTA.pt")
 
