@@ -5,3 +5,29 @@ Pillow==12.1.1
 PyYAML==6.0.2
 scikit-learn==1.8.0
 tqdm==4.67.1
+
+# Install torch separately BEFORE running pip install -r requirements.txt.
+# Choose ONE of the commands below depending on your setup:
+#
+#   CPU-only:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+#   CUDA 12.x:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu128
+#
+
+# ---- PyTorch -----
+# Install torch and torchvision separately BEFORE running pip install -r requirements.txt.
+# This project uses PyTorch 2.6.
+# Choose ONE of the commands below depending on your setup and CUDA version:
+#
+#   CPU-only:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+#   CUDA 12.x:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu128
+#
+# For other CUDA versions: https://pytorch.org/get-started/locally/
+
+torch>=2.6.0
+torchvision>=0.21.0
