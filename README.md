@@ -14,7 +14,7 @@ For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
 - Configure paths in `config.yaml`. Start by copying `config-example.yaml`  ([Configuration](#configuration))
-- Put images in `data` folder and organize validation data by running `cd data; python organize_val_data.py` ([Data Setup](#data-setup))
+- Put images in `data` folder and organize validation data by running `cd data` then `python organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
   - Training: `src/train_eo_alignment.py`
   - Feature extraction: `src/extract_features.py`
