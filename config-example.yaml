@@ -4,16 +4,22 @@
 
 paths:
   # DINOv3 - download weights and clone repo from: <link here>
-  dino_weights: "/path/to/dinov3_vits16plus_pretrain.pth"
+  dino_weights_vits_plus: "/path/to/dinov3_vits16plus_pretrain_lvd1689m-4057cbaa.pth"
+  dino_weights_vitl_sat: "/path/to/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth"
   dino_repo: "/path/to/dinov3"
 
   # MAVIC-C 2025 dataset - place in ./data or update paths below
-  # val_data should point to the output of organize_mavic_val_into_folders.py
+  # val_organized_id and val_organized_ood should point to the outputs of organize_mavic_val_into_folders.py
   train_sar: "./data/train/SAR_Train"
   train_eo: "./data/train/EO_Train"
   val: "./data/val"
   val_data_reference: "./data/validation_reference.csv"
-  val_organized: "./data/val_organized"
+  val_organized_iid: "./data/val_organized/IID"
+  val_organized_ood: "./data/val_organized/OOD"
   test: "./data/test"
+
+  # Outputs
+  output_dir: "./output"
+  model_checkpoint: "dinov3_vits_plus_lora_finetune.pth"
 
 
