@@ -51,11 +51,9 @@ Team IDCOM achieved 3rd place overall with a total score of 0.38.
 
 ## Installation
 
-## Installation
-
 Major requirements:
  - DINOv3: Clone the DINOv3 repo and download weights from the [official repo](https://github.com/facebookresearch/dinov3). Make sure to download ViT-S+ (web images) **and** ViT-L (satellite images) weights.
- - PyTorch: DINOv3 requires a recent PyTorch version, this project uses PyTorch 2.6.
+ - PyTorch: DINOv3 requires a recent(ish) PyTorch version, this project uses PyTorch 2.6.
  - LoRA Finetuning: `peft` is a [parameter efficient fine tuning](https://github.com/huggingface/peft) library used for the LoRA fine tuning of the DINOv3 backbone.
 
 Other standard packages like `numpy`, `pandas`, `scikit-learn`, etc. are also required.
@@ -167,6 +165,6 @@ Below is an overview of how to use the solution. If you need any help running th
 ```bash
    python src/inference.py
 ```
-   This classifies the test images, scores them using the Mahalanobis detector and outputs a `submission.csv`.
+   This classifies the test images using the fine tuned backbone, scores them using the Mahalanobis detector and outputs a `submission.csv`.
 
 
