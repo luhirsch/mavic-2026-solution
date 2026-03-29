@@ -165,6 +165,6 @@ Below is an overview of how to use the solution. If you need any help running th
 ```bash
    python src/inference.py
 ```
-   This classifies the test images, scores them using the Mahalanobis detector and outputs a `submission.csv`.
+   This classifies the test images using the fine tuned backbone, scores them using the Mahalanobis detector and outputs a `submission.csv`.
 
 
