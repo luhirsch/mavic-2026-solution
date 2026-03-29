@@ -1,4 +1,4 @@
-# Team IDCOM Solution: 5th Multi-modal Aerial View Imagery Challenge: Classification (MAVIC-C)
+# Team IDCOM Solution to the 5th Multi-modal Aerial View Imagery Challenge: Classification (MAVIC-C)
 
 ### 3rd Place Overall | 1st Place for OOD Detection (Best AUROC & TNR@TPR95)
 
@@ -14,7 +14,7 @@ For running the code, please follow these steps:
 
 - Install required packages and download DINOv3 weights ([Installation](#installation))
 - Configure paths in `config.yaml`. Start by copying `config-example.yaml`  ([Configuration](#configuration))
-- Put images in `data` folder and organize validation data by running `cd data; python organize_val_data.py` ([Data Setup](#data-setup))
+- Put images in `data` folder and organize validation data by running `cd data` then `python organize_val_data.py` ([Data Setup](#data-setup))
 - Run training, feature extraction and inference ([Usage](#usage))
   - Training: `src/train_eo_alignment.py`
   - Feature extraction: `src/extract_features.py`
