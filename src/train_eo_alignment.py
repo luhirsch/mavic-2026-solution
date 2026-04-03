@@ -64,7 +64,8 @@ CONFIG = {
     "EPOCHS": 25,
     "LR": 0.8e-5,
     "CHECKPOINT_NAME": MODEL_CHECKPOINT,
-
+    "SEED": 777,
+    
     # LoRA Configuration
     "LORA_R": 28,
     "LORA_ALPHA": 2*28,
@@ -74,7 +75,6 @@ CONFIG = {
     # Loss configuration
     "LAMBDA_ALIGN": 0.45,
 }
-RANDOM_SEED = 999
 SAVE_PATH = os.path.join(OUTPUT_DIR, CONFIG["CHECKPOINT_NAME"])
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -96,6 +96,7 @@ print(f"""
     Epochs:       {CONFIG["EPOCHS"]}
     Learning Rate: {CONFIG["LR"]}
     Image Size:   {IMAGE_SIZE}
+    Random Seed:  {CONFIG["SEED"]}
 
     LoRA Rank (r): {CONFIG["LORA_R"]}
     Classification Weight: {1 - CONFIG["LAMBDA_ALIGN"]}
@@ -198,7 +199,7 @@ def run_training():
 
     # Set seed and create sampler
     generator = torch.Generator()
-    generator.manual_seed(RANDOM_SEED)
+    generator.manual_seed(CONFIG["SEED"])
     sampler = WeightedRandomSampler(samples_weights,
                                     num_samples=len(samples_weights),
                                     generator=generator,
